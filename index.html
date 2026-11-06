@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upside-Down Division: GCF and LCM</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #ffffff; --ink: #1c2333; --muted: #5b6477;
+    --line: #c9d0e0; --accent: #3355d6; --accent-ink: #ffffff;
+    --soft: #eef1fb; --good: #1f7a37; --good-bg: #e4f5e9; --bad: #b42323; --bad-bg: #fdeaea;
+    --info-bg: #dfe7ff; --hl: #b25e00; --hl-bg: #fff1dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151d; --card: #1b2030; --ink: #e8ecf6; --muted: #9aa5bd;
+      --line: #394261; --accent: #7b96ff; --accent-ink: #0d1226;
+      --soft: #232a40; --good: #6fd68b; --good-bg: #1b3326; --bad: #ff8c8c; --bad-bg: #3a1c1c;
+      --info-bg: #2a3558; --hl: #ffb43b; --hl-bg: #3a2e12;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 700px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 12px; }
+  .card { background: var(--card); border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .goal { font-size: 1.2rem; }
+  .goal b { font-size: 1.7rem; }
+  .goal .kind { color: var(--accent); }
+  .goal small { display: block; color: var(--muted); font-size: .85rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; cursor: pointer; }
+  .btn { border: 2px solid var(--accent); background: transparent; color: var(--accent); border-radius: 10px; padding: 6px 12px; font-weight: 600; font-size: .95rem; }
+  .btn.sm { padding: 4px 10px; font-size: .85rem; }
+  .btn.cta { background: var(--accent); color: var(--accent-ink); }
+  .btn:disabled { opacity: .35; cursor: default; }
+  :focus-visible { outline: 3px solid #f08c00; outline-offset: 2px; }
+  .how { margin: 10px 0 6px; color: var(--muted); font-size: .95rem; }
+
+  /* the upside-down division diagram */
+  .cake { display: flex; flex-direction: column; align-items: center; margin: 12px 0 4px; }
+  .crow { display: flex; align-items: center; gap: 0; width: max-content; max-width: 100%; }
+  .lcell { width: 88px; text-align: right; padding-right: 12px; font-size: 1.5rem; font-weight: 800; }
+  .ncell { display: flex; padding: 6px 0 4px; border-left: 3px solid transparent; border-bottom: 3px solid transparent; }
+  .ncell.bar { border-left-color: var(--ink); border-bottom-color: var(--ink); }
+  .n { width: 78px; text-align: center; font-size: 1.6rem; font-weight: 700; }
+  .xcell { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .hl { color: var(--hl); background: var(--hl-bg); border-radius: 8px; }
+  input {
+    font: inherit; font-weight: 700; text-align: center; padding: 4px; min-width: 0;
+    border-radius: 10px; border: 2px dashed var(--accent); background: var(--card); color: var(--ink);
+  }
+  .lcell input { width: 72px; font-size: 1.4rem; }
+  .n input { width: 66px; font-size: 1.4rem; }
+  .ans { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-top: 14px; }
+  .ans .eq { font-size: 1.4rem; font-weight: 800; }
+  .ans input { width: 130px; font-size: 1.4rem; }
+
+  .coach { margin-top: 12px; padding: 8px 12px; border-radius: 10px; font-size: .95rem; line-height: 1.4; }
+  .coach.bad { background: var(--bad-bg); color: var(--bad); }
+  .coach.info { background: var(--info-bg); }
+  .verdict { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--good-bg); }
+  .verdict p { margin: 0 0 6px; }
+  .verdict .big { font-size: 1.2rem; font-weight: 800; }
+  .verdict .work { font-size: 1.05rem; }
+  .verdict .btn { margin-top: 8px; }
+  @media (max-width: 520px) {
+    body { font-size: 16px; } main { padding: 12px 8px 32px; } .card { padding: 12px; }
+    .lcell { width: 66px; padding-right: 8px; } .lcell input { width: 58px; }
+    .n { width: 62px; font-size: 1.4rem; } .n input { width: 54px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Upside-Down Division</h1>
+  <div class="card">
+    <div class="top">
+      <div class="goal">Find the <b class="kind" id="kind">GCF</b> of <b id="a">?</b> and <b id="b">?</b><small id="kindword"></small></div>
+      <div class="row">
+        <button class="btn sm" id="showme">Show me</button>
+        <button class="btn sm" id="restart">Start over</button>
+        <button class="btn sm" id="newNum">New numbers</button>
+      </div>
+    </div>
+    <p class="how">Type a number that goes into both. Then write what each number becomes. Keep going until the two numbers left share no common factor.</p>
+    <div class="cake" id="cake"></div>
+    <div id="answer"></div>
+    <div id="coach" class="coach" hidden></div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var A, B, kind, rows, phase, pending, coach, hl, keep, lastKind = null, lastPair = [0, 0];
+  // rows: [{a, b, d}] - d is the divisor taken out of that row (null while it is still the bottom row)
+  // phase: 'divisor' | 'quotients' | 'answer' | 'done'
+
+  var $cake = document.getElementById('cake'), $answer = document.getElementById('answer'), $coach = document.getElementById('coach');
+  var $show = document.getElementById('showme');
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function gcd(x, y) { while (y) { var t = x % y; x = y; y = t; } return x; }
+  function lcm(x, y) { return x / gcd(x, y) * y; }
+  function smallestPrime(n) { for (var i = 2; i * i <= n; i++) if (n % i === 0) return i; return n; }
+  function parse(inp) { var t = inp.value.replace(/[,\s]/g, ''); return /^\d+$/.test(t) ? parseInt(t, 10) : NaN; }
+  function prod(a) { return a.reduce(function (p, x) { return p * x; }, 1); }
+  function last() { return rows[rows.length - 1]; }
+
+  /* ---------- picking a problem ---------- */
+  // numbers share a common factor g (sometimes a composite one, so the cake can take several steps)
+  function pickPair() {
+    var G = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
+    for (var t = 0; t < 5000; t++) {
+      var g = G[rnd(0, G.length - 1)], m = rnd(1, 10), n = rnd(1, 10);
+      if (m === n || gcd(m, n) !== 1) continue;
+      if ((m === 1 || n === 1) && Math.random() > 0.15) continue;      // only now and then is one number a factor of the other
+      var a = g * m, b = g * n; if (a > b) { var s = a; a = b; b = s; }
+      if (a < 6 || b > 120 || (a === lastPair[0] && b === lastPair[1])) continue;
+      return [a, b];
+    }
+    return [12, 18];
+  }
+
+  function begin(a, b, k) {
+    var p = a && b ? [a, b] : pickPair();
+    A = p[0]; B = p[1]; lastPair = p;
+    kind = k || (lastKind === 'gcf' ? 'lcm' : 'gcf'); lastKind = kind;      // alternate GCF and LCM
+    rows = [{ a: A, b: B, d: null }]; phase = 'divisor'; pending = null; coach = null; hl = 'none'; keep = null;
+    render();
+  }
+
+  /* ---------- rendering ---------- */
+  function saveTyped() {
+    keep = {}; ['dv', 'qa', 'qb', 'ans'].forEach(function (id) { var e = document.getElementById(id); if (e) keep[id] = e.value; });
+  }
+  function restoreTyped() {
+    if (!keep) return; Object.keys(keep).forEach(function (id) { var e = document.getElementById(id); if (e) e.value = keep[id]; }); keep = null;
+  }
+
+  function render(keepTyped) {
+    if (keepTyped) saveTyped(); else keep = null;
+    document.getElementById('kind').textContent = kind.toUpperCase();
+    document.getElementById('kindword').textContent = kind === 'gcf' ? 'greatest common factor' : 'least common multiple';
+    document.getElementById('a').textContent = A; document.getElementById('b').textContent = B;
+    $show.disabled = phase === 'done';
+
+    $cake.innerHTML = '';
+    var finalPhase = phase === 'answer' || phase === 'done';
+    rows.forEach(function (row, i) {
+      var isLast = i === rows.length - 1, isFinal = isLast && finalPhase;
+      var crow = el('div', 'crow'), lcell = el('div', 'lcell'), ncell = el('div', 'ncell' + (isFinal ? '' : (row.d != null || (isLast && phase === 'divisor') ? ' bar' : '')));
+      var showHlLeft = hl !== 'none' && row.d != null, showHlBottom = hl === 'L' && isFinal;
+      if (row.d != null) { lcell.textContent = row.d; if (showHlLeft) lcell.classList.add('hl'); }
+      else if (isLast && phase === 'divisor') lcell.appendChild(divisorInput());
+      [row.a, row.b].forEach(function (v) { var n = el('div', 'n' + (showHlBottom ? ' hl' : ''), v); ncell.appendChild(n); });
+      crow.appendChild(lcell); crow.appendChild(ncell);
+      $cake.appendChild(crow);
+    });
+    if (phase === 'quotients') $cake.appendChild(pendingRow());
+    if (phase === 'divisor') $cake.appendChild(divisorButtons());
+
+    $answer.innerHTML = '';
+    if (phase === 'answer') $answer.appendChild(answerRow());
+    if (phase === 'done') $answer.appendChild(verdictBox());
+
+    if (coach) { $coach.hidden = false; $coach.className = 'coach ' + coach.k; $coach.textContent = coach.t; } else { $coach.hidden = true; }
+    restoreTyped();
+    var f = document.getElementById(phase === 'quotients' ? (pending.okA ? 'qb' : 'qa') : phase === 'answer' ? 'ans' : 'dv');
+    if (f && matchMedia('(pointer: fine)').matches) f.focus({ preventScroll: true });
+  }
+
+  function divisorInput() {
+    var inp = el('input'); inp.id = 'dv'; inp.type = 'text'; inp.inputMode = 'numeric'; inp.autocomplete = 'off';
+    inp.setAttribute('aria-label', 'A common factor of ' + last().a + ' and ' + last().b);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitDivisor(); } });
+    return inp;
+  }
+  function divisorButtons() {
+    var x = el('div', 'xcell');
+    var ok = el('button', 'btn sm', 'Check'), none = el('button', 'btn sm', 'No common factor');
+    ok.addEventListener('click', submitDivisor); none.addEventListener('click', noCommon);
+    x.appendChild(ok); x.appendChild(none); return x;
+  }
+  function pendingRow() {
+    var crow = el('div', 'crow'), lcell = el('div', 'lcell'), ncell = el('div', 'ncell');
+    var d = pending;
+    [['qa', d.qa, d.okA], ['qb', d.qb, d.okB]].forEach(function (q, idx) {
+      var cell = el('div', 'n');
+      if (q[2]) cell.textContent = q[1];
+      else {
+        var inp = el('input'); inp.id = q[0]; inp.type = 'text'; inp.inputMode = 'numeric'; inp.autocomplete = 'off';
+        var from = idx === 0 ? last().a : last().b;
+        inp.setAttribute('aria-label', from + ' divided by ' + d.d);
+        inp.addEventListener('input', function () { onQuotient(idx, inp); });
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); onQuotient(idx, inp, true); } });
+        cell.appendChild(inp);
+      }
+      ncell.appendChild(cell);
+    });
+    crow.appendChild(lcell); crow.appendChild(ncell); return crow;
+  }
+  function answerRow() {
+    var r = el('div', 'ans');
+    r.appendChild(el('span', 'eq', kind.toUpperCase() + ' ='));
+    var inp = el('input'); inp.id = 'ans'; inp.type = 'text'; inp.inputMode = 'numeric'; inp.autocomplete = 'off';
+    inp.setAttribute('aria-label', 'The ' + kind.toUpperCase() + ' of ' + A + ' and ' + B);
+    inp.addEventListener('input', function () { if (parse(inp) === target()) finish(false); });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(inp); } });
+    var chk = el('button', 'btn sm', 'Check'); chk.addEventListener('click', function () { checkAnswer(inp); });
+    r.appendChild(inp); r.appendChild(chk); return r;
+  }
+
+  /* ---------- the ending ---------- */
+  function target() { return kind === 'gcf' ? gcd(A, B) : lcm(A, B); }
+  function workText() {
+    var left = rows.filter(function (r) { return r.d != null; }).map(function (r) { return r.d; }), bottom = [last().a, last().b];
+    var factors = kind === 'gcf' ? left : left.concat(bottom);
+    return kind.toUpperCase() + ' = ' + (factors.length > 1 ? factors.join(' × ') + ' = ' : '') + prod(factors);
+  }
+  function verdictBox() {
+    var v = el('div', 'verdict');
+    v.appendChild(el('p', 'big', (shown ? 'Here is the answer: ' : '✅ Correct! ') + kind.toUpperCase() + ' of ' + A + ' and ' + B + ' is ' + target() + '.'));
+    v.appendChild(el('p', 'work', workText()));
+    v.appendChild(el('p', 'work', kind === 'gcf'
+      ? 'The GCF is the product of the numbers on the left side.'
+      : 'The LCM is the product of the numbers on the left side and the numbers on the bottom (an “L” shape).'));
+    var nx = el('button', 'btn cta', 'Next problem'); nx.addEventListener('click', function () { begin(); });
+    v.appendChild(nx); return v;
+  }
+  var shown = false;
+  function finish(viaShow) { shown = !!viaShow; phase = 'done'; coach = null; hl = kind === 'lcm' ? 'L' : 'left'; render(); }
+
+  /* ---------- actions ---------- */
+  function setCoach(k, t) { coach = { k: k, t: t }; $coach.hidden = false; $coach.className = 'coach ' + k; $coach.textContent = t; }
+
+  function submitDivisor() {
+    var row = last(), inp = document.getElementById('dv'), v = parse(inp), a = row.a, b = row.b;
+    if (isNaN(v)) return setCoach('bad', 'Type a number that goes into both ' + a + ' and ' + b + ', or choose “No common factor.”');
+    if (v < 1) return setCoach('bad', 'Use a whole number bigger than 1.');
+    if (v === 1) return setCoach('bad', '1 goes into everything, but it would not change the numbers. Try a bigger common factor.');
+    var okA = a % v === 0, okB = b % v === 0;
+    if (!okA && !okB) return setCoach('bad', v + ' does not go into ' + a + ' or ' + b + '. You need a number that goes into both.');
+    if (!okA) return setCoach('bad', v + ' goes into ' + b + ' but not ' + a + '. You need a number that goes into both.');
+    if (!okB) return setCoach('bad', v + ' goes into ' + a + ' but not ' + b + '. You need a number that goes into both.');
+    row.d = v; pending = { d: v, qa: a / v, qb: b / v, okA: false, okB: false }; phase = 'quotients'; coach = null; render();
+  }
+
+  function onQuotient(idx, inp, force) {
+    var d = pending, want = idx === 0 ? d.qa : d.qb, from = idx === 0 ? last().a : last().b, v = parse(inp);
+    if (isNaN(v)) { if (force) setCoach('bad', 'Type what ' + from + ' becomes when you divide by ' + d.d + '.'); return; }
+    if (v === want) {
+      if (idx === 0) d.okA = true; else d.okB = true;
+      coach = null;
+      if (d.okA && d.okB) { rows.push({ a: d.qa, b: d.qb, d: null }); pending = null; phase = 'divisor'; render(); }
+      else render(true);
+      return;
+    }
+    if (force || String(v).length >= String(want).length) setCoach('bad', from + ' ÷ ' + d.d + ' is not ' + v + '. What number times ' + d.d + ' makes ' + from + '?');
+  }
+
+  function noCommon() {
+    var row = last();
+    if (gcd(row.a, row.b) > 1) return setCoach('bad', 'Not yet — ' + row.a + ' and ' + row.b + ' still share a common factor. Look for a number that goes into both.');
+    phase = 'answer'; coach = null; render();
+  }
+
+  function checkAnswer(inp) {
+    var v = parse(inp), t = target();
+    if (isNaN(v)) return setCoach('bad', 'Type a whole number.');
+    if (v === t) return finish(false);
+    var other = kind === 'gcf' ? lcm(A, B) : gcd(A, B), msg;
+    if (v === other) msg = 'Not quite — ' + v + ' is the ' + (kind === 'gcf' ? 'LCM' : 'GCF') + '. ';
+    else msg = 'Not quite. ';
+    msg += kind === 'gcf' ? 'The GCF is the product of the numbers on the left side of the diagram.'
+                          : 'The LCM is the product of the numbers on the left side AND the numbers on the bottom. That makes an “L” shape.';
+    hl = kind === 'lcm' ? 'L' : 'left';
+    coach = { k: 'bad', t: msg }; render(true);
+  }
+
+  function showMe() {
+    if (phase === 'done') return;
+    var row = last();
+    if (phase === 'divisor') {
+      if (gcd(row.a, row.b) === 1) { phase = 'answer'; setNote(row.a + ' and ' + row.b + ' share no common factor except 1, so we stop dividing.'); return; }
+      var d = smallestPrime(gcd(row.a, row.b));
+      row.d = d; rows.push({ a: row.a / d, b: row.b / d, d: null }); phase = 'divisor';
+      setNote(d + ' goes into both ' + row.a + ' and ' + row.b + ': ' + row.a + ' ÷ ' + d + ' = ' + row.a / d + ' and ' + row.b + ' ÷ ' + d + ' = ' + row.b / d + '.');
+    } else if (phase === 'quotients') {
+      var p = pending; rows.push({ a: p.qa, b: p.qb, d: null }); pending = null; phase = 'divisor';
+      setNote(row.a + ' ÷ ' + p.d + ' = ' + p.qa + ' and ' + row.b + ' ÷ ' + p.d + ' = ' + p.qb + '.');
+    } else if (phase === 'answer') {
+      finish(true);
+    }
+  }
+  function setNote(t) { coach = { k: 'info', t: t }; render(); }
+
+  $show.addEventListener('click', showMe);
+  document.getElementById('newNum').addEventListener('click', function () { begin(); });
+  document.getElementById('restart').addEventListener('click', function () { begin(A, B, kind); lastKind = kind; });
+
+  // optional: ?a=12&b=18&t=gcf (or lcm) in the URL sets the first problem
+  var P = new URLSearchParams(location.search), qa = parseInt(P.get('a'), 10), qb = parseInt(P.get('b'), 10), qt = P.get('t');
+  if (qa >= 2 && qb >= 2 && qa !== qb && qa <= 999 && qb <= 999 && gcd(qa, qb) > 1) begin(Math.min(qa, qb), Math.max(qa, qb), qt === 'lcm' ? 'lcm' : qt === 'gcf' ? 'gcf' : null);
+  else begin();
+})();
+</script>
+</body>
+</html>
