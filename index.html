@@ -106,22 +106,26 @@
   function lcm(x, y) { return x / gcd(x, y) * y; }
   function smallestPrime(n) { for (var i = 2; i * i <= n; i++) if (n % i === 0) return i; return n; }
   function parse(inp) { var t = inp.value.replace(/[,\s]/g, ''); return /^\d+$/.test(t) ? parseInt(t, 10) : NaN; }
+  function fmt(x) { return x.toLocaleString('en-US'); }
   function prod(a) { return a.reduce(function (p, x) { return p * x; }, 1); }
   function last() { return rows[rows.length - 1]; }
 
   /* ---------- picking a problem ---------- */
-  // numbers share a common factor g (sometimes a composite one, so the cake can take several steps)
+  // Numbers from 30 to 500, built from a shared factor g and two coprime multipliers, so g is exactly the GCF.
+  // Most often g is composite (like 24 or 36), so the ladder takes several steps.
+  var G_COMPOSITE = [6, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 24, 25, 28, 30, 36, 40, 42, 45, 48, 60];
+  var G_PRIME = [7, 11, 13];
   function pickPair() {
-    var G = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
-    for (var t = 0; t < 5000; t++) {
-      var g = G[rnd(0, G.length - 1)], m = rnd(1, 10), n = rnd(1, 10);
+    for (var t = 0; t < 20000; t++) {
+      var pool = Math.random() < 0.15 ? G_PRIME : G_COMPOSITE, g = pool[rnd(0, pool.length - 1)];
+      var m = rnd(1, 12), n = rnd(1, 12);
       if (m === n || gcd(m, n) !== 1) continue;
-      if ((m === 1 || n === 1) && Math.random() > 0.15) continue;      // only now and then is one number a factor of the other
+      if ((m === 1 || n === 1) && Math.random() > 0.12) continue;      // only now and then is one number a factor of the other
       var a = g * m, b = g * n; if (a > b) { var s = a; a = b; b = s; }
-      if (a < 6 || b > 120 || (a === lastPair[0] && b === lastPair[1])) continue;
+      if (a < 30 || b > 500 || (a === lastPair[0] && b === lastPair[1])) continue;
       return [a, b];
     }
-    return [12, 18];
+    return [120, 180];
   }
 
   function begin(a, b, k) {
@@ -236,11 +240,11 @@
   function workText() {
     var left = rows.filter(function (r) { return r.d != null; }).map(function (r) { return r.d; }), bottom = [last().a, last().b];
     var factors = kind === 'gcf' ? left : left.concat(bottom);
-    return kind.toUpperCase() + ' = ' + (factors.length > 1 ? factors.join(' × ') + ' = ' : '') + prod(factors);
+    return kind.toUpperCase() + ' = ' + (factors.length > 1 ? factors.join(' × ') + ' = ' : '') + fmt(prod(factors));
   }
   function verdictBox() {
     var v = el('div', 'verdict');
-    v.appendChild(el('p', 'big', (shown ? 'Here is the answer: ' : '✅ Correct! ') + kind.toUpperCase() + ' of ' + A + ' and ' + B + ' is ' + target() + '.'));
+    v.appendChild(el('p', 'big', (shown ? 'Here is the answer: ' : '✅ Correct! ') + kind.toUpperCase() + ' of ' + A + ' and ' + B + ' is ' + fmt(target()) + '.'));
     v.appendChild(el('p', 'work', workText()));
     v.appendChild(el('p', 'work', kind === 'gcf'
       ? 'The GCF is the product of the numbers on the left side.'
