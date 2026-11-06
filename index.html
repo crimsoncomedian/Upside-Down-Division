@@ -175,14 +175,32 @@
   function divisorInput() {
     var inp = el('input'); inp.id = 'dv'; inp.type = 'text'; inp.inputMode = 'numeric'; inp.autocomplete = 'off';
     inp.setAttribute('aria-label', 'A common factor of ' + last().a + ' and ' + last().b);
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitDivisor(); } });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(divTimer); submitDivisor(); } });
+    inp.addEventListener('input', function () { onDivisorTyped(inp); });
     return inp;
+  }
+  // Accept a valid common factor as soon as it is typed. If it could still grow into a bigger common
+  // factor (2 on the way to 24), wait a moment for another digit. A wrong number is reported after a pause.
+  var divTimer = null;
+  function isCommon(v, row) { return v > 1 && row.a % v === 0 && row.b % v === 0; }
+  function couldGrow(v, row) {
+    var g = gcd(row.a, row.b), s = String(v);
+    for (var c = v + 1; c <= g; c++) if (g % c === 0 && String(c).length > s.length && String(c).indexOf(s) === 0) return true;
+    return false;
+  }
+  function onDivisorTyped(inp) {
+    clearTimeout(divTimer);
+    var v = parse(inp), row = last();
+    if (isNaN(v)) return;
+    var later = function (ms) { divTimer = setTimeout(function () { if (document.getElementById('dv') === inp && parse(inp) === v) submitDivisor(); }, ms); };
+    if (isCommon(v, row)) { if (couldGrow(v, row)) later(650); else submitDivisor(); }
+    else later(900);
   }
   function divisorButtons() {
     var x = el('div', 'xcell');
-    var ok = el('button', 'btn sm', 'Check'), none = el('button', 'btn sm', 'No common factor');
-    ok.addEventListener('click', submitDivisor); none.addEventListener('click', noCommon);
-    x.appendChild(ok); x.appendChild(none); return x;
+    var none = el('button', 'btn sm', 'No common factor');
+    none.addEventListener('click', noCommon);
+    x.appendChild(none); return x;
   }
   function pendingRow() {
     var crow = el('div', 'crow'), lcell = el('div', 'lcell'), ncell = el('div', 'ncell');
